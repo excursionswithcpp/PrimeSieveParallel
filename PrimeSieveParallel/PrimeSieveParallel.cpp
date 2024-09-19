@@ -25,15 +25,16 @@ enum  optionIndex { UNKNOWN, SIEVES, MEMORY, PRIME, HELP, LOGFILE };
 
 const option::Descriptor usage[] = {
 { UNKNOWN,  0, "", "",			Arg::None, "USAGE: primesieveparallel [options]\n\n"
-										  "Options:" },
+											"Options:" },
 { HELP,     0, "h", "help",		Arg::None,    "  \t--help  \tPrint usage and exit." },
-{ SIEVES,   0, "s","sieves",	Arg::Required,"  -s <arg>, \t--sieves=<arg>"
-										  "  \tMaximum number of parallel sieves." },
-{ MEMORY,   0, "m","memory",	Arg::Required,"  -m<arg>, \t--memory=<arg>  \tMaximum amount of memory to use" },
-{ PRIME,    0, "p","prime",		Arg::Required,"  -p <arg>, \t--prime=<arg>"
-										  "  \tFind primes up to this number" },
-{ LOGFILE,  0, "l","logfile",	Arg::Required,"  -l <arg>, \t--logfile=<arg>"
-										  "  \tWrite summary of run to this file" },
+{ SIEVES,   0, "s", "sieves",	Arg::Required,"  -s <arg>, \t--sieves=<arg>"
+											"  \tMaximum number of parallel sieves." },
+{ MEMORY,   0, "m", "memory",	Arg::Required,"  -m<arg>, \t--memory=<arg>"
+											"  \tMaximum amount of memory to use" },
+{ PRIME,    0, "p", "prime",	Arg::Required,"  -p <arg>, \t--prime=<arg>"
+											"  \tFind primes up to this number" },
+{ LOGFILE,  0, "l", "logfile",	Arg::Required,"  -l <arg>, \t--logfile=<arg>"
+											"  \tWrite summary of run to this file" },
 { UNKNOWN,  0, "", "",			Arg::None,
  "\nExamples:\n"
  "  primesieveparallel -s4 -m1e9 -p 1000000\n"
@@ -72,7 +73,7 @@ private:
 		itype rangeSize = endRange - startRange + 1; // Include both ends
 		numbers = new char[rangeSize] { 0 };
 
-		itype sqrtEnd = sqrt((double)endRange);
+		itype sqrtEnd = sqrt((long double)endRange);
 		itype p = 2;
 		itype pindex = 0;
 
@@ -80,7 +81,7 @@ private:
 		{
 			itype i;
 
-			if (p * p > startRange)
+			if (p * p >= startRange)
 				i = p * p - startRange;
 			else
 			{
@@ -178,8 +179,8 @@ private:
 		itype maxRangeSize;
 
 		// Calculate how many primes the starter must calculate on its own
-		itype sqrtMaxNum = sqrt(double(maxPrime));
-		itype sqrtSqrtMaxNum = sqrt((double)sqrtMaxNum);
+		itype sqrtMaxNum = sqrt((long double)(maxPrime));
+		itype sqrtSqrtMaxNum = sqrt((long double)sqrtMaxNum);
 
 		// Prepare the primary sieve in the starter
 		char* numbers = new char[sqrtMaxNum + 1] {0};  // Starts at 0, must include sqrtMaxNum
@@ -188,7 +189,7 @@ private:
 		cout << "Initial sieve size: " << sqrtMaxNum << endl;
 		cout << "Initial sieve seeding prime size: " << sqrtSqrtMaxNum << endl;
 
-		// Calculate the first sqrtMaxNum primes
+		// Calculate the first primes <= sqrtMaxNum
 		itype p = 2;
 		do
 		{
@@ -215,7 +216,7 @@ private:
 
 		cout << "Initial sieve number of primes: " << numPrimes << endl;
 
-		// Convert initial sieve to primes
+		// Convert initial sieve to list of primes
 		initialNumPrimes = numPrimes;
 		initialPrimes = new itype[numPrimes];
 		itype index = 0;
@@ -232,7 +233,7 @@ private:
 		numbers = nullptr;
 
 		// Calculate rangesize on the basis of used and max memory
-		unsigned long long int startUse = sizeof(starter) + sizeof(itype) * numPrimes;
+		size_t startUse = sizeof(starter) + sizeof(itype) * numPrimes;
 		maxRangeSize = (maxMemory - startUse + parallelSieves - 1) / parallelSieves;
 
 		// Adjust rangesize if less than maxMemory needed
@@ -286,7 +287,7 @@ private:
 
 		} while (outstandingSieves > 0);
 
-		cout << endl << numPrimes << " primtal" << endl;
+		cout << endl << numPrimes << " primes" << endl;
 		// Output summary
 
 		done();
@@ -347,9 +348,9 @@ int main(int argc, char* argv[])
 		const char* pMem = options[MEMORY].arg;
 		
 		// Allow parameter to be in float format, eg. 1E8
-		double dMem;
-		std::from_chars(pMem, pMem + strlen(pMem), dMem);
-		memory = (long long int) dMem;
+		long double ldMem;
+		std::from_chars(pMem, pMem + strlen(pMem), ldMem);
+		memory = (long long int) ldMem;
 
 		maxMemory = memory;
 	}
@@ -358,11 +359,11 @@ int main(int argc, char* argv[])
 	if (options[PRIME])
 	{
 		// Allow parameter to be in float format, eg. 1E8
-		double dPrime;
+		long double ldPrime;
 		const char* parg = options[PRIME].arg;
-		std::from_chars(parg, parg + strlen(parg), dPrime);
+		std::from_chars(parg, parg + strlen(parg), ldPrime);
 
-		itype prime = (itype) dPrime;
+		itype prime = (itype) ldPrime;
 
 		if (prime > 0)
 			maxPrime = prime;

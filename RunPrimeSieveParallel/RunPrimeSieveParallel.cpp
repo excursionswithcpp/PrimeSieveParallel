@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <vector>
 
 int main()
 {
@@ -13,18 +14,15 @@ int main()
 
     const unsigned long long int maxPrime = 10 * G1;
     std::ostringstream commandLine;
-    unsigned long long memValues[] = {
+    std::vector<unsigned long long> memValues {
         23*G1,
     };
 
-    int numMemValues = sizeof(memValues) / sizeof(memValues[0]);
+    std::vector<int> sieveValues { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32 };
 
-    int sieveValues[] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32 };
-    int numSieveValues = sizeof(sieveValues) / sizeof(sieveValues[0]);
-
-    for (int s = 0; s < numSieveValues; s++)
+    for (int s = 0; s < sieveValues.size(); s++)
     {
-        for (int m = 0; m < numMemValues; m++)
+        for (int m = 0; m < memValues.size(); m++)
         {
             std::ostringstream commandLine;
 
@@ -32,7 +30,7 @@ int main()
             commandLine << " -p " << maxPrime;
             commandLine << " -s " << sieveValues[s];
             commandLine << " -m " << memValues[m];
-            commandLine << " -l " << "p10GmFullsAll.csv";
+            commandLine << " -l " << "TestOutput.csv";
             commandLine << std::endl;
 
             std::cout << commandLine.str();
