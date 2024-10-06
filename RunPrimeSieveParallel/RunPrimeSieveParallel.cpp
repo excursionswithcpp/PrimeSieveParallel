@@ -8,34 +8,55 @@
 
 int main()
 {
-#define G1 (1000000000ULL)
-#define M1 (1000000ULL)
-#define K1 (1000ULL)
+    constexpr unsigned long long int K1 = 1000;
+    constexpr unsigned long long int M1 = K1 * 1000;
+    constexpr unsigned long long int G1 = M1 * 1000;
+    constexpr unsigned long long int T1 = G1 * 1000;
 
-    const unsigned long long int maxPrime = 10 * G1;
-    std::ostringstream commandLine;
+    constexpr unsigned long long int Ki1 = 1024;
+    constexpr unsigned long long int Mi1 = 1024 * Ki1;
+    constexpr unsigned long long int Gi1 = 1024 * Mi1;
+
+    std::vector<unsigned long long int> maxPrimeValues{ 20*T1 };
+    
     std::vector<unsigned long long> memValues {
-        23*G1,
+        20*G1,
     };
 
-    std::vector<int> sieveValues { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32 };
+    std::vector<int> sieveValues{
+        32
+    };
 
-    for (int s = 0; s < sieveValues.size(); s++)
+    std::vector<unsigned long long> rangeValues{
+        512* Ki1, (512 + 256)* Ki1
+    };
+
+    std::ostringstream commandLine;
+
+    for (auto p : maxPrimeValues)
     {
-        for (int m = 0; m < memValues.size(); m++)
+        for (auto s : sieveValues)
         {
-            std::ostringstream commandLine;
+            for (auto m : memValues)
+            {
+                for (auto r : rangeValues)
+                {
+                    std::ostringstream commandLine;
 
-            commandLine << "..\\..\\PrimeSieveParallel\\x64\\Release\\PrimeSieveParallel.exe ";
-            commandLine << " -p " << maxPrime;
-            commandLine << " -s " << sieveValues[s];
-            commandLine << " -m " << memValues[m];
-            commandLine << " -l " << "TestOutput.csv";
-            commandLine << std::endl;
+                    commandLine << "..\\..\\PrimeSieveParallel\\x64\\Release\\PrimeSieveParallel.exe ";
+                    commandLine << " -p " << static_cast<long double>(p);
+                    commandLine << " -s " << s;
+                    commandLine << " -m " << m;
+                    commandLine << " -r " << r;
 
-            std::cout << commandLine.str();
+                    commandLine << " -l " << "p10M-10000Gs32mMaxrMedium.csv";
+                    commandLine << std::endl;
 
-            system(commandLine.str().c_str());
+                    std::cout << commandLine.str();
+
+                    system(commandLine.str().c_str());
+                }
+            }
         }
     }
 }

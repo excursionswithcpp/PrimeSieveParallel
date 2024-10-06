@@ -21,7 +21,7 @@ struct Arg : public option::Arg
 	}
 };
 
-enum  optionIndex { UNKNOWN, SIEVES, MEMORY, PRIME, HELP, LOGFILE };
+enum  optionIndex { UNKNOWN, SIEVES, MEMORY, PRIME, HELP, LOGFILE, RANGE };
 
 const option::Descriptor usage[] = {
 { UNKNOWN,  0, "", "",			Arg::None, "USAGE: primesieveparallel [options]\n\n"
@@ -35,6 +35,8 @@ const option::Descriptor usage[] = {
 											"  \tFind primes up to this number" },
 { LOGFILE,  0, "l", "logfile",	Arg::Required,"  -l <arg>, \t--logfile=<arg>"
 											"  \tWrite summary of run to this file" },
+{ RANGE,	0, "r", "range",	Arg::Required,"  -r <arg>, \t--range=<arg>"
+											"  \tMaximum range of each sieve" },
 { UNKNOWN,  0, "", "",			Arg::None,
  "\nExamples:\n"
  "  primesieveparallel -s4 -m1e9 -p 1000000\n"
@@ -119,27 +121,30 @@ public:
 	starter(
 		itype maxPrime,
 		int parallelSieves,
-		itype maxMemory
+		itype maxMemory,
+		itype maxRange = std::numeric_limits<itype>::max()
 	)
 		:
 		maxPrime(maxPrime),
 		parallelSieves(parallelSieves),
-		maxMemory(maxMemory)
+		maxMemory(maxMemory),
+		maxRange(maxRange)
 	{
 	};
 
 	itype numPrimes = 0;
 	int totalSieves;
+	itype rangeSize;
 
 private:
 	itype maxPrime;
 	int parallelSieves;
 	itype maxMemory;
+	itype maxRange;
 
 	unbounded_buffer<sieve*> resultChannel;
 
 	itype nextSieveStart;
-	itype rangeSize;
 
 	itype initialNumPrimes = 0;
 	itype* initialPrimes = nullptr;
@@ -239,6 +244,9 @@ private:
 		// Adjust rangesize if less than maxMemory needed
 		rangeSize = std::min<itype>(maxRangeSize, (maxPrime - sqrtMaxNum + parallelSieves - 1) / parallelSieves);
 
+		// Adjust according to command line maximum range
+		rangeSize = std::min<itype>(rangeSize, maxRange);
+
 		cout << endl;
 		cout << "Range for each sieve: " << rangeSize << endl;
 		totalSieves = (maxPrime - sqrtMaxNum + rangeSize - 1) / rangeSize;
@@ -301,6 +309,7 @@ int main(int argc, char* argv[])
 	int parallelSieves = 8;
 	unsigned long long int maxMemory = 0x80000000ULL - 1;
 	itype maxPrime = 1000000;
+	itype maxRange = maxMemory;
 
 	// Imbue with thousand separators because we have big numbers
 	// Because of trouble with locales on MINGW64, the facet is implemented with raw force
@@ -346,7 +355,7 @@ int main(int argc, char* argv[])
 		unsigned long long int memory;
 
 		const char* pMem = options[MEMORY].arg;
-		
+
 		// Allow parameter to be in float format, eg. 1E8
 		long double ldMem;
 		std::from_chars(pMem, pMem + strlen(pMem), ldMem);
@@ -355,6 +364,19 @@ int main(int argc, char* argv[])
 		maxMemory = memory;
 	}
 	cout << "Specified max memory: " << maxMemory << endl;
+
+	maxRange = maxMemory;
+	if (options[RANGE])
+	{
+		const char* pMem = options[RANGE].arg;
+
+		// Allow parameter to be in float format, eg. 1E8
+		long double ldRange;
+		std::from_chars(pMem, pMem + strlen(pMem), ldRange);
+
+		maxRange = (itype)ldRange;
+	}
+	cout << "Specified max range: " << maxRange << endl;
 
 	if (options[PRIME])
 	{
@@ -372,7 +394,7 @@ int main(int argc, char* argv[])
 
 	auto startT = std::chrono::high_resolution_clock::now();
 
-	starter first(maxPrime, parallelSieves, maxMemory);
+	starter first(maxPrime, parallelSieves, maxMemory, maxRange);
 
 	first.start();
 
@@ -394,6 +416,7 @@ int main(int argc, char* argv[])
 		log << maxMemory << ";";
 		log << first.numPrimes << ";";
 		log << elapsedSeconds << ";";
+		log << first.rangeSize << ";";
 		log << endl;
 	}
 }
