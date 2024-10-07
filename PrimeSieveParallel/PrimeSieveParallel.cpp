@@ -3,6 +3,8 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <stack>
+#include <mutex>
 
 #include <agents.h>
 
@@ -43,6 +45,30 @@ const option::Descriptor usage[] = {
 },
 { 0, 0, 0, 0, 0, 0 } }; // End of table
 
+size_t rangeSize;
+
+
+std::mutex memPoolMutex;
+
+std::stack<char*> memPool;
+
+char* getRange()
+{
+	std::unique_lock<std::mutex> lock(memPoolMutex);
+
+	char* result = memPool.top();
+	memPool.pop();
+	memset(result, 0, rangeSize);
+	return result;
+}
+
+void releaseRange(char* range)
+{
+	std::unique_lock<std::mutex> lock(memPoolMutex);
+
+	memPool.push(range);
+}
+
 class sieve : public agent
 {
 public:
@@ -56,7 +82,7 @@ public:
 
 	~sieve()
 	{
-		delete[] numbers;
+		releaseRange(numbers);
 	}
 
 	itype primeCount = 0;
@@ -73,7 +99,7 @@ private:
 	void run()
 	{
 		itype rangeSize = endRange - startRange + 1; // Include both ends
-		numbers = new char[rangeSize] { 0 };
+		numbers = getRange();
 
 		itype sqrtEnd = sqrt((long double)endRange);
 		itype p = 2;
@@ -253,6 +279,13 @@ private:
 		cout << "Using " << totalSieves << " sieves" << endl;
 
 		cout << endl;
+
+		// Initialize memory pool
+		::rangeSize = rangeSize;
+		for (int i = 0; i < parallelSieves; i++)
+		{
+			memPool.push(new char[rangeSize]);
+		}
 
 		// Start the sieves
 		nextSieveStart = sqrtMaxNum+1;
