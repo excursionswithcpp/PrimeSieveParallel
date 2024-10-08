@@ -45,30 +45,6 @@ const option::Descriptor usage[] = {
 },
 { 0, 0, 0, 0, 0, 0 } }; // End of table
 
-size_t rangeSize;
-
-
-std::mutex memPoolMutex;
-
-std::stack<char*> memPool;
-
-char* getRange()
-{
-	std::unique_lock<std::mutex> lock(memPoolMutex);
-
-	char* result = memPool.top();
-	memPool.pop();
-	memset(result, 0, rangeSize);
-	return result;
-}
-
-void releaseRange(char* range)
-{
-	std::unique_lock<std::mutex> lock(memPoolMutex);
-
-	memPool.push(range);
-}
-
 class sieve : public agent
 {
 public:
@@ -82,24 +58,22 @@ public:
 
 	~sieve()
 	{
-		releaseRange(numbers);
 	}
 
 	itype primeCount = 0;
+
+	char* numbers = nullptr;
 
 private:
 	itype startRange, endRange;
 	const itype* initPrimes;
 	itype numInitPrimes;
 
-	char* numbers = nullptr;
-
 	concurrency::ITarget<sieve*>& resultChannel;
 
 	void run()
 	{
 		itype rangeSize = endRange - startRange + 1; // Include both ends
-		numbers = getRange();
 
 		itype sqrtEnd = sqrt((long double)endRange);
 		itype p = 2;
@@ -175,6 +149,21 @@ private:
 	itype initialNumPrimes = 0;
 	itype* initialPrimes = nullptr;
 
+	std::stack<char*> memPool;
+
+	char* getRange()
+	{
+		char* result = memPool.top();
+		memPool.pop();
+		memset(result, 0, rangeSize);
+		return result;
+	}
+
+	void releaseRange(char* range)
+	{
+		memPool.push(range);
+	}
+
 	bool CreateSieve()
 	{
 		if (nextSieveStart > maxPrime)
@@ -194,6 +183,8 @@ private:
 				initialPrimes,
 				initialNumPrimes,
 				resultChannel);
+
+		newSieve->numbers = getRange();
 
 		//cout << "Making sieve with start " << nextSieveStart
 		//     << " and end " << end << endl;
@@ -281,7 +272,6 @@ private:
 		cout << endl;
 
 		// Initialize memory pool
-		::rangeSize = rangeSize;
 		for (int i = 0; i < parallelSieves; i++)
 		{
 			memPool.push(new char[rangeSize]);
@@ -312,6 +302,7 @@ private:
 			// cout << "Sieve " << finishedSieves << " has " << sievePrimes << " primes" << endl;
 
 			// delete it
+			releaseRange(finished->numbers);
 			delete finished;
 			finished = nullptr;
 
