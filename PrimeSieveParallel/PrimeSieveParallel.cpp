@@ -72,26 +72,59 @@ private:
 
 	void run()
 	{
-		itype rangeSize = endRange - startRange + 1; // Include both ends
-		numbers = new char[rangeSize] { 0 };
-
 		itype sqrtEnd = sqrt((long double)endRange);
-		itype p = 2;
-		itype pindex = 0;
+
+		// Start with the first odd number
+		itype startPoint = startRange;
+		if (startPoint % 2 == 0)
+			startPoint++;
+
+		// End with the last odd number
+		itype endPoint = endRange;
+		if (endPoint % 2 == 0)
+			endPoint--;
+
+		itype length = (endPoint - startPoint) / 2 + 1; // Include both ends, but skip even numbers
+
+		numbers = new char[length] { 0 };
+
+		itype p = 3;
+		itype pindex = 1;
 
 		while (p <= sqrtEnd)
 		{
 			itype i;
 
-			if (p * p >= startRange)
-				i = p * p - startRange;
+			// p*p is odd, since p is odd for p > 2
+			// startPoint is odd
+			// Therefore the difference is even
+			if (p * p >= startPoint)
+				i = (p * p - startPoint)/2;
 			else
 			{
-				itype offset = (startRange % p);
-				i = (offset == 0 && p != startRange) ? 0 : (p - offset);
+				// it was a bit tricky to synchronize the multiples of the prime
+				// with the sieve only representing the odd numbers
+				// Dividing with 2p to get the remainder
+				// will always give an odd remainder, as startPoint is odd
+				// and any multiple of 2p is even, and since p is odd
+				// the differences to the remainder will be even.
+				// Then there are 2 cases, depending on whether the multiple of p
+				// just before startPoint is an even or an odd multiple
+				itype rem = (startPoint % (2 * p));
+				i = 0;
+				if (rem > p)
+				{
+					i = (3 * p - rem) / 2;
+				}
+				else
+				{
+					i = (p - rem) / 2;
+				}
 			}
 
-			for (; i < rangeSize; i += p)
+			// Going forward with p is really going forward with 2p
+			// Eliminating the odd multiples
+			for (; i < length; i += p)
 			{
 				numbers[i] = 1;
 			}
@@ -101,7 +134,7 @@ private:
 		}
 
 		// Count my primes
-		for (itype i = 0; i < rangeSize; i++)
+		for (itype i = 0; i < length; i++)
 		{
 			if (numbers[i] == 0)
 			{
