@@ -9,6 +9,8 @@
 using namespace concurrency;
 using namespace std;
 
+std::string buildCompilerString();
+
 #include "optionparser.h"
 
 typedef unsigned long long int itype;
@@ -450,7 +452,40 @@ int main(int argc, char* argv[])
 		log << first.numPrimes << ";";
 		log << elapsedSeconds << ";";
 		log << first.rangeSize << ";";
+		log << "\"" << buildCompilerString() << "\";";
 		log << endl;
 	}
+}
+
+std::string buildCompilerString()
+{
+	std::string compiler = "Unknown";
+#if defined(_MSC_VER)
+#if defined(__clang_version__)
+	compiler = "Visual Studio clang ("  __clang_version__ ")";
+#else
+	compiler = "MSVC";
+#endif
+
+#if !defined(NDEBUG)
+	compiler += " (debug build)";
+#endif
+#elif defined(__GNUG__)
+#if defined(__MINGW64__)
+	compiler = "MinGW64";
+#elif defined(__clang_version__)
+	compiler = "clang ("  __clang_version__ ")";
+#else
+	compiler = "g++";
+#endif
+
+#if !defined(__OPTIMIZE__)
+	compiler += " (debug build)";
+#endif
+#elif defined(__clang_version__)
+	compiler = "clang ("  __clang_version__ ")";
+#endif
+
+	return compiler;
 }
 
