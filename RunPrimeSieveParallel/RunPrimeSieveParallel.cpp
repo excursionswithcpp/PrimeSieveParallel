@@ -17,10 +17,10 @@ int main()
     constexpr unsigned long long int Mi1 = 1024 * Ki1;
     constexpr unsigned long long int Gi1 = 1024 * Mi1;
 
-    std::vector<unsigned long long int> maxPrimeValues{ 10 * G1 };
+    std::vector<unsigned long long int> maxPrimeValues{ 100 * G1 };
 
     std::vector<unsigned long long> memValues{
-        20 * G1,
+        10 * G1,
     };
 
     std::vector<int> sieveValues{
@@ -39,8 +39,9 @@ int main()
         {
             for (auto m : memValues)
             {
-                for (auto r : rangeValues)
+                for (int i = 0; i <9; i++)
                 {
+                    unsigned long long r = (128 + i * 128) * Ki1;
                     std::ostringstream commandLine;
 
                     commandLine << "..\\..\\PrimeSieveParallel\\x64\\Release\\PrimeSieveParallel.exe ";
