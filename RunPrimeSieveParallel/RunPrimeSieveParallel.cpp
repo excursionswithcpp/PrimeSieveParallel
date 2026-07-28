@@ -45,12 +45,13 @@ int main()
                     std::ostringstream commandLine;
 
                     commandLine << "..\\..\\PrimeSieveParallel\\x64\\Release\\PrimeSieveParallel.exe ";
+//                    commandLine << "..\\..\\PrimeSieveParallel\\x64\\Debug\\PrimeSieveParallel.exe ";
                     commandLine << " -p " << static_cast<long double>(p);
                     commandLine << " -s " << s;
                     commandLine << " -m " << m;
                     commandLine << " -r " << r;
 
-                    commandLine << " -l " << "Skip1s.csv";
+                    commandLine << " -l " << "Seeding1.csv";
                     commandLine << std::endl;
 
                     std::cout << commandLine.str();
