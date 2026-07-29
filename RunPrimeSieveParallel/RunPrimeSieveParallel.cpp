@@ -17,10 +17,10 @@ int main()
     constexpr unsigned long long int Mi1 = 1024 * Ki1;
     constexpr unsigned long long int Gi1 = 1024 * Mi1;
 
-    std::vector<unsigned long long int> maxPrimeValues{ 20*T1 };
-    
-    std::vector<unsigned long long> memValues {
-        20*G1,
+    std::vector<unsigned long long int> maxPrimeValues{ 100 * G1 };
+
+    std::vector<unsigned long long> memValues{
+        10 * G1,
     };
 
     std::vector<int> sieveValues{
@@ -28,7 +28,7 @@ int main()
     };
 
     std::vector<unsigned long long> rangeValues{
-        512* Ki1, (512 + 256)* Ki1
+        256 * Ki1, (256 + 128) * Ki1, 512 * Ki1, (512 + 128) * Ki1, (512 + 256) * Ki1, (512 + 256 + 128) * Ki1, (1024) * Ki1, (1024 + 128) * Ki1, (1024 + 256) * Ki1
     };
 
     std::ostringstream commandLine;
@@ -39,8 +39,9 @@ int main()
         {
             for (auto m : memValues)
             {
-                for (auto r : rangeValues)
+                for (int i = 0; i <9; i++)
                 {
+                    unsigned long long r = (128 + i * 128) * Ki1;
                     std::ostringstream commandLine;
 
                     commandLine << "..\\..\\PrimeSieveParallel\\x64\\Release\\PrimeSieveParallel.exe ";
@@ -49,7 +50,7 @@ int main()
                     commandLine << " -m " << m;
                     commandLine << " -r " << r;
 
-                    commandLine << " -l " << "p10M-10000Gs32mMaxrMedium.csv";
+                    commandLine << " -l " << "Skip1s.csv";
                     commandLine << std::endl;
 
                     std::cout << commandLine.str();
