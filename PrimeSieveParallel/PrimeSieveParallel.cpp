@@ -45,6 +45,8 @@ const option::Descriptor usage[] = {
 },
 { 0, 0, 0, 0, 0, 0 } }; // End of table
 
+// Setting this value to 6 for now, a larger value may save some time
+// but larger seed data may compete for cache space, initial measurements showed something like that
 itype const firstPrimeIndex = 6;
 
 class sieve : public agent
@@ -267,15 +269,19 @@ private:
 		delete[] numbers;
 		numbers = nullptr;
 
-		// Create seed data from the first few primes: 2, 3, 5, 7, 11, 13, product is 30030
-		// Next prime to use has index 6
-		seedDataLength = 30030;
+		// Create seed data from the first few primes: 2, 3, 5, 7, 11, 13, ...
+		// Next prime to use has index firstPrimeIndex
+		seedDataLength = 1;
+		for (int i = 0; i < firstPrimeIndex; i++)
+		{
+			seedDataLength *= initialPrimes[i];
+		}
 		seedData = new char[seedDataLength] { 0 };
 		for (int i = 0; i < firstPrimeIndex; i++)
 		{
 			itype p = initialPrimes[i];
-			// Since 30030 is a multiple of all, start with index 0
-			for (int j = 0; j < 30030; j += p)
+			// Since seedDataLength is a multiple of all, start with index 0
+			for (int j = 0; j < seedDataLength; j += p)
 			{
 				seedData[j] = 1;
 			}
