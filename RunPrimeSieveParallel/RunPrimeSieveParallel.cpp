@@ -45,6 +45,7 @@ int main()
                     std::ostringstream commandLine;
 
                     commandLine << "..\\..\\PrimeSieveParallel\\x64\\Release\\PrimeSieveParallel.exe ";
+//                    commandLine << "..\\..\\PrimeSieveParallel\\x64\\Debug\\PrimeSieveParallel.exe ";
                     commandLine << " -p " << static_cast<long double>(p);
                     commandLine << " -s " << s;
                     commandLine << " -m " << m;

@@ -45,13 +45,20 @@ const option::Descriptor usage[] = {
 },
 { 0, 0, 0, 0, 0, 0 } }; // End of table
 
+// Setting this value to 6 for now, a larger value may save some time
+// but larger seed data may compete for cache space, initial measurements showed something like that
+itype const firstPrimeIndex = 6;
+
 class sieve : public agent
 {
 public:
-	sieve(itype startRange, itype endRange, const itype* initPrimes, itype numInitPrimes, ITarget<sieve*>& endChannel)
+	sieve(itype startRange, itype endRange, const itype* initPrimes, itype numInitPrimes, 
+		  char *seedData, itype seedDataLength,
+		  ITarget<sieve*>& endChannel)
 		: 
 		startRange(startRange), endRange(endRange), 
-		initPrimes(initPrimes), numInitPrimes(numInitPrimes), 
+		initPrimes(initPrimes), numInitPrimes(numInitPrimes),
+		seedData(seedData), seedDataLength(seedDataLength),
 		resultChannel(endChannel)
 	{
 	};
@@ -72,9 +79,32 @@ private:
 
 	concurrency::ITarget<sieve*>& resultChannel;
 
+	char* seedData;
+	itype seedDataLength;
+
 	void run()
 	{
+		itype rangeSize = endRange - startRange + 1; // Include both ends
+		// Seed with intermediate sieve from the first few primes, instead of zeroes
+		numbers = new char[rangeSize];
+		itype dst = 0;
+		itype src = startRange % seedDataLength;
+		itype length = min(seedDataLength - src, rangeSize - dst);
+		// First try, simple loops, next try, memcpy invocations
+		while (dst < rangeSize)
+		{
+			memcpy(&numbers[dst], &seedData[src], length);
+
+			src = 0;
+			dst += length;
+			length = min(seedDataLength, rangeSize-dst);
+		}
+
 		itype sqrtEnd = sqrt((long double)endRange);
+		// Since the partial sieve in numbers is already seeded with the run of the first
+		// few primes, start with the next, not used in the seed
+		itype pindex = firstPrimeIndex;
+		itype p = initPrimes[pindex];
 
 		// Start with the first odd number
 		itype startPoint = startRange;
@@ -184,6 +214,9 @@ private:
 	itype initialNumPrimes = 0;
 	itype* initialPrimes = nullptr;
 
+	char* seedData;
+	itype seedDataLength;
+
 	bool CreateSieve()
 	{
 		if (nextSieveStart > maxPrime)
@@ -202,6 +235,8 @@ private:
 				end,
 				initialPrimes,
 				initialNumPrimes,
+				seedData,
+				seedDataLength,
 				resultChannel);
 
 		//cout << "Making sieve with start " << nextSieveStart
@@ -272,6 +307,24 @@ private:
 		delete[] numbers;
 		numbers = nullptr;
 
+		// Create seed data from the first few primes: 2, 3, 5, 7, 11, 13, ...
+		// Next prime to use has index firstPrimeIndex
+		seedDataLength = 1;
+		for (int i = 0; i < firstPrimeIndex; i++)
+		{
+			seedDataLength *= initialPrimes[i];
+		}
+		seedData = new char[seedDataLength] { 0 };
+		for (int i = 0; i < firstPrimeIndex; i++)
+		{
+			itype p = initialPrimes[i];
+			// Since seedDataLength is a multiple of all, start with index 0
+			for (int j = 0; j < seedDataLength; j += p)
+			{
+				seedData[j] = 1;
+			}
+		}
+
 		// Calculate rangesize on the basis of used and max memory
 		size_t startUse = sizeof(starter) + sizeof(itype) * numPrimes;
 		maxRangeSize = (maxMemory - startUse + parallelSieves - 1) / parallelSieves;
@@ -330,7 +383,7 @@ private:
 
 		} while (outstandingSieves > 0);
 
-		cout << endl << numPrimes << " primes" << endl;
+		cout << endl << numPrimes << " primes" << endl << endl;
 		// Output summary
 
 		done();
@@ -438,7 +491,7 @@ int main(int argc, char* argv[])
 	auto elapsed = std::chrono::high_resolution_clock::now() - startT;
 	auto elapsedSeconds = (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() / 1000.0);
 
-	cout << "Total time: " <<  elapsedSeconds << " seconds" << endl;
+	cout << "Total time: " <<  elapsedSeconds << " seconds" << endl << endl;
 
 	// Log results
 	if (options[LOGFILE])
