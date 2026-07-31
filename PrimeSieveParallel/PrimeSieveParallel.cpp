@@ -89,6 +89,7 @@ private:
 		itype length = (endPoint - startPoint) / 2 + 1; // Include both ends, but skip even numbers
 
 		numbers = new char[length] { 0 };
+		char* pEnd = &numbers[length];
 
 		itype p = 3;
 		itype pindex = 1;
@@ -126,7 +127,12 @@ private:
 
 			// Going forward with p is really going forward with 2p
 			// Eliminating the odd multiples
-			for (; i < length; i += p)
+			// At the same time, keep track of remaining possible primes
+			// Hand optimizing indexing with pointer arithmetic
+			char* pStart = &(numbers[i]);
+			char* pNumber = pStart;
+
+			for (; pNumber < pEnd; pNumber += p)
 			{
 				*pNumber = 1;
 			}
