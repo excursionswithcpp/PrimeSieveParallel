@@ -50,7 +50,7 @@ int main()
                     commandLine << " -m " << m;
                     commandLine << " -r " << r;
 
-                    commandLine << " -l " << "Skip2s.csv";
+                    commandLine << " -l " << "Skip2Countdown.csv";
                     commandLine << std::endl;
 
                     std::cout << commandLine.str();
