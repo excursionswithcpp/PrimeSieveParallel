@@ -91,9 +91,6 @@ private:
 		numbers = new char[length] { 0 };
 		char* pEnd = &numbers[length];
 
-		// Assume all are primes
-		primeCount = length;
-
 		itype p = 3;
 		itype pindex = 1;
 
@@ -137,19 +134,20 @@ private:
 
 			for (; pNumber < pEnd; pNumber += p)
 			{
-				if (*pNumber == 0)
-				{
-					// A prime has been eliminated
-					primeCount--;
-					*pNumber = 1;
-				}
+				*pNumber = 1;
 			}
 
 			pindex++;
 			p = (pindex < numInitPrimes) ? initPrimes[pindex] : sqrtEnd + 1;
 		}
 
-		// Primes have been kept track of
+		// Count primes
+		char* pNumber = &numbers[0];
+
+		for (; pNumber < pEnd; pNumber++)
+		{
+			primeCount += (1-*pNumber);
+		}
 
 		done();
 
