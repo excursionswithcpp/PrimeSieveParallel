@@ -39,7 +39,7 @@ int main()
         {
             for (auto m : memValues)
             {
-                for (int i = 3; i <15; i++)
+                for (int i = 3; i <20; i++)
                 {
                     unsigned long long r = (128 + i * 128) * Ki1;
                     std::ostringstream commandLine;

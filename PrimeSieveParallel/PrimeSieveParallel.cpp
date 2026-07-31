@@ -128,20 +128,19 @@ private:
 			// Eliminating the odd multiples
 			for (; i < length; i += p)
 			{
-				numbers[i] = 1;
+				*pNumber = 1;
 			}
 
 			pindex++;
 			p = (pindex < numInitPrimes) ? initPrimes[pindex] : sqrtEnd + 1;
 		}
 
-		// Count my primes
-		for (itype i = 0; i < length; i++)
+		// Count primes
+		char* pNumber = &numbers[0];
+
+		for (; pNumber < pEnd; pNumber++)
 		{
-			if (numbers[i] == 0)
-			{
-				primeCount++;
-			}
+			primeCount += (1-*pNumber);
 		}
 
 		done();
