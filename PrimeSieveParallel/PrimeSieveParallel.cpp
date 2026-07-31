@@ -47,7 +47,7 @@ const option::Descriptor usage[] = {
 
 // Setting this value to 6 for now, a larger value may save some time
 // but larger seed data may compete for cache space, initial measurements showed something like that
-itype const firstPrimeIndex = 6;
+itype const firstPrimeIndex = 7;
 
 class sieve : public agent
 {
@@ -84,28 +84,6 @@ private:
 
 	void run()
 	{
-		itype rangeSize = endRange - startRange + 1; // Include both ends
-		// Seed with intermediate sieve from the first few primes, instead of zeroes
-		numbers = new char[rangeSize];
-		itype dst = 0;
-		itype src = startRange % seedDataLength;
-		itype length = min(seedDataLength - src, rangeSize - dst);
-		// First try, simple loops, next try, memcpy invocations
-		while (dst < rangeSize)
-		{
-			memcpy(&numbers[dst], &seedData[src], length);
-
-			src = 0;
-			dst += length;
-			length = min(seedDataLength, rangeSize-dst);
-		}
-
-		itype sqrtEnd = sqrt((long double)endRange);
-		// Since the partial sieve in numbers is already seeded with the run of the first
-		// few primes, start with the next, not used in the seed
-		itype pindex = firstPrimeIndex;
-		itype p = initPrimes[pindex];
-
 		// Start with the first odd number
 		itype startPoint = startRange;
 		if (startPoint % 2 == 0)
@@ -116,12 +94,34 @@ private:
 		if (endPoint % 2 == 0)
 			endPoint--;
 
+		// itype rangeSize = endRange - startRange + 1; // Include both ends
 		itype length = (endPoint - startPoint) / 2 + 1; // Include both ends, but skip even numbers
 
-		numbers = new char[length] { 0 };
+		numbers = new char[length];
 
-		itype p = 3;
-		itype pindex = 1;
+		// Seed with intermediate sieve from the first few primes, instead of zeroes
+		itype dst = 0;
+
+		itype src = startRange % (seedDataLength * 2);
+		src /= 2;
+
+		itype sectionLength = min(seedDataLength - src, length - dst);
+		// memcpy invocations are more effective
+		while (dst < length)
+		{
+			memcpy(&numbers[dst], &seedData[src], sectionLength);
+
+			src = 0;
+			dst += sectionLength;
+			sectionLength = min(seedDataLength, length - dst);
+		}
+
+
+		// Since the partial sieve in numbers is already seeded with the run of the first
+		// few primes, start with the next, not used in the seed
+		itype pindex = firstPrimeIndex;
+		itype p = initPrimes[pindex];
+		itype sqrtEnd = sqrt((long double) endRange);
 
 		while (p <= sqrtEnd)
 		{
@@ -314,16 +314,26 @@ private:
 		{
 			seedDataLength *= initialPrimes[i];
 		}
-		seedData = new char[seedDataLength] { 0 };
+		char * tempSeedData = new char[seedDataLength] { 0 };
 		for (int i = 0; i < firstPrimeIndex; i++)
 		{
 			itype p = initialPrimes[i];
 			// Since seedDataLength is a multiple of all, start with index 0
 			for (int j = 0; j < seedDataLength; j += p)
 			{
-				seedData[j] = 1;
+				tempSeedData[j] = 1;
 			}
 		}
+
+		seedData = new char[seedDataLength / 2];
+		for (itype src = 1, dst = 0; src < seedDataLength; src += 2, dst++)
+		{
+			seedData[dst] = tempSeedData[src];
+		}
+
+		seedDataLength /= 2;
+		delete[] tempSeedData;
+		tempSeedData = nullptr;
 
 		// Calculate rangesize on the basis of used and max memory
 		size_t startUse = sizeof(starter) + sizeof(itype) * numPrimes;
